@@ -367,8 +367,7 @@ class Pipeline:
     ) -> FinalAnswer:
         latency = int((time.monotonic() - t_start) * 1000)
         clarification = (
-            intent_result.clarification_needed
-            or "Could you clarify what you'd like to see?"
+            intent_result.clarification_needed or "Could you clarify what you'd like to see?"
         )
         narrative = {
             "out_of_scope": (

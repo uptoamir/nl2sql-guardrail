@@ -30,9 +30,7 @@ def classify(
 
     Returns ``(Intent, StageCall)`` so the pipeline can record telemetry.
     """
-    prompt = render_intent_prompt(
-        question=question, history=history, active_dept=active_dept
-    )
+    prompt = render_intent_prompt(question=question, history=history, active_dept=active_dept)
     raw = shared.llm_client.complete_json(prompt, Intent.model_json_schema(), stage="intent")
     telemetry = raw.pop("_telemetry", {})
     intent = Intent.model_validate(raw)
