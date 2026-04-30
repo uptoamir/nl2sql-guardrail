@@ -20,7 +20,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock README.md ./
 
 # Sync core + ui extras (cli mode is a subset).
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
     uv sync --frozen --no-install-project --extra ui
 
 # Now copy source so changes don't bust the deps cache.
@@ -29,7 +29,7 @@ COPY streamlit_app.py ./
 COPY employees.db ./
 
 # Final install with the project itself.
-RUN --mount=type=cache,target=/root/.cache/uv \
+RUN --mount=type=cache,id=uv-cache,target=/root/.cache/uv \
     uv sync --frozen --extra ui
 
 
