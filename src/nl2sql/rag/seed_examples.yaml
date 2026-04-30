@@ -1,0 +1,85 @@
+# Seed few-shot examples per final_1.md §6.2.
+# Hand-curated (NL question, gold SQL) pairs covering the 7 query shapes.
+# Drafter prompt injects top-k of these as few-shot examples.
+#
+# Every gold SQL references ONLY allowed_* views — never base tables.
+# These are the worked examples that teach the LLM "how scoping looks."
+
+- id: ex-01
+  question: "How many employees are there?"
+  sql: "SELECT COUNT(*) AS n FROM allowed_employees"
+  tags: [aggregate, count]
+
+- id: ex-02
+  question: "What is the average salary?"
+  sql: "SELECT AVG(SalaryAmount) AS avg_salary FROM allowed_employees"
+  tags: [aggregate, salary]
+
+- id: ex-03
+  question: "Who are the software engineers?"
+  sql: "SELECT EmployeeId, Name, Role FROM allowed_employees WHERE Role LIKE '%Software Engineer%' ORDER BY Name"
+  tags: [filter, role, like]
+
+- id: ex-04
+  question: "Top 3 highest-paid by total comp"
+  sql: "SELECT Name, SalaryAmount + COALESCE(YearlyBonusAmount, 0) AS total_comp FROM allowed_employees ORDER BY total_comp DESC LIMIT 3"
+  tags: [aggregate, coalesce, top_n, ambiguity]
+
+- id: ex-05
+  question: "Employees who started after 2023, with their certifications"
+  sql: |
+    SELECT e.Name, e.EmploymentStartDate, c.CertificationName, c.DateAchieved
+    FROM allowed_employees e
+    LEFT JOIN allowed_certifications c USING (EmployeeId)
+    WHERE e.EmploymentStartDate > '2023-01-01'
+    ORDER BY e.EmploymentStartDate
+  tags: [join_left, time_filter]
+
+- id: ex-06
+  question: "Which employees hold an AWS certification?"
+  sql: |
+    SELECT e.Name, c.CertificationName
+    FROM allowed_employees e
+    INNER JOIN allowed_certifications c USING (EmployeeId)
+    WHERE c.CertificationName LIKE '%AWS%'
+    ORDER BY e.Name
+  tags: [join_inner, certification, like]
+
+- id: ex-07
+  question: "Who has the highest remaining benefits balance?"
+  sql: |
+    SELECT e.Name, b.BenefitsPackage, b.RemainingBalance
+    FROM allowed_employees e
+    INNER JOIN allowed_benefits b USING (EmployeeId)
+    ORDER BY b.RemainingBalance DESC
+    LIMIT 1
+  tags: [join_inner, benefits, top_n]
+
+- id: ex-08
+  question: "Average salary by role"
+  sql: |
+    SELECT Role, AVG(SalaryAmount) AS avg_salary, COUNT(*) AS n
+    FROM allowed_employees
+    GROUP BY Role
+    ORDER BY avg_salary DESC
+  tags: [aggregate, group_by]
+
+- id: ex-09
+  question: "Employees with no bonus"
+  sql: "SELECT EmployeeId, Name, Role FROM allowed_employees WHERE YearlyBonusAmount IS NULL"
+  tags: [filter, null_handling]
+
+- id: ex-10
+  question: "List all certifications"
+  sql: "SELECT DISTINCT CertificationName FROM allowed_certifications ORDER BY CertificationName"
+  tags: [orphan_cert, distinct]
+
+- id: ex-11
+  question: "Most-recently hired employee"
+  sql: "SELECT Name, Role, EmploymentStartDate FROM allowed_employees ORDER BY EmploymentStartDate DESC LIMIT 1"
+  tags: [order_by, top_n]
+
+- id: ex-12
+  question: "Total annual payroll (salary + bonus)"
+  sql: "SELECT SUM(SalaryAmount + COALESCE(YearlyBonusAmount, 0)) AS total_payroll FROM allowed_employees"
+  tags: [aggregate, coalesce, sum]

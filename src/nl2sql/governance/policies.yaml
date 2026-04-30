@@ -1,0 +1,26 @@
+# PII / financial column registry — per final_1.md §14.2.
+# `redact.py` consumes this to know which keys to HMAC-hash before
+# audit-log emission.
+
+columns:
+  Employee.Name: pii_direct
+  Employee.SalaryAmount: financial
+  Employee.YearlyBonusAmount: financial
+  Employee.EmploymentStartDate: pii_quasi
+  Certification.CertificationName: pii_quasi
+  Benefits.BenefitsPackage: pii_quasi
+  Benefits.RemainingBalance: financial
+
+# Logical column names (without table prefix) the redactor matches as well —
+# these cover both base-table names and view aliases.
+keys_to_redact:
+  - Name
+  - SalaryAmount
+  - YearlyBonusAmount
+  - RemainingBalance
+
+retention:
+  audit.jsonl: 7y
+  debug.jsonl: 7d
+  metric_data: 13mo
+  trace_data: 30d

@@ -1,0 +1,21 @@
+# Column business descriptions — per final_1.md §5.2.
+# Highest-leverage artifact for accuracy: the LLM uses these descriptions
+# to disambiguate (e.g., "salary" vs "bonus" vs "total comp").
+
+allowed_employees.EmployeeId: "Stable employee identifier. INTEGER PRIMARY KEY in the source. Use for joins to allowed_certifications and allowed_benefits."
+allowed_employees.Name: "Full legal name. Free-text; may include accents and apostrophes."
+allowed_employees.Department: "Department assignment. Enum: Sales, Marketing, Engineering. (You are scoped to a single one — never expect mixed values.)"
+allowed_employees.Role: "Job title within the department. Free-text following a controlled vocabulary. Use LIKE for semantic matches (e.g., 'Software Engineer' matches both 'Software Engineer' and 'Senior Software Engineer')."
+allowed_employees.EmploymentStartDate: "ISO date (YYYY-MM-DD) of hire. Use for tenure / 'started after' filters."
+allowed_employees.SalaryAmount: "Annual base salary in USD. EXCLUDES bonuses and equity. PII — redacted in audit logs."
+allowed_employees.YearlyBonusAmount: "Annual cash bonus in USD. NULL means 'no bonus plan' (distinct from zero earned). For 'average bonus', prefer COALESCE(YearlyBonusAmount, 0) so NULLs count as zero."
+
+allowed_certifications.CertificationId: "Stable certification record id. PRIMARY KEY."
+allowed_certifications.EmployeeId: "FK to allowed_employees. An employee may have zero or many certifications — use LEFT JOIN if you want cert-less employees in your result."
+allowed_certifications.CertificationName: "Display name of professional certification (e.g., 'AWS Solutions Architect', 'CISSP'). Use LIKE for partial-name matches."
+allowed_certifications.DateAchieved: "ISO date (YYYY-MM-DD). Most-recent achievement; renewals overwrite."
+
+allowed_benefits.BenefitId: "Stable benefit record id. PRIMARY KEY."
+allowed_benefits.EmployeeId: "FK to allowed_employees. An employee may have multiple benefit records (different packages over time)."
+allowed_benefits.BenefitsPackage: "Tier of benefits enrollment. Enum: Bronze, Silver, Gold, Platinum."
+allowed_benefits.RemainingBalance: "USD balance remaining in the FSA/HSA-style allotment for the current year. PII-adjacent — redacted in audit logs."

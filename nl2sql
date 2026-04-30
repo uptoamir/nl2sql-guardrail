@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+# ./nl2sql — single-command launcher for the Dayforce NL2SQL Data Agent.
+#
+# Usage: ./nl2sql <mode> [flags]
+#
+# Modes:
+#   ui     Launch the Streamlit web UI
+#   cli    Launch the terminal REPL
+#   test   Run the test suite
+#   eval   Run the LLM eval harness
+#
+# Flags:
+#   --openai-key=sk-...           OpenAI API key (or pass --mock)
+#   --mock                        Use canned LLM responses (no key needed)
+#   --runtime=local|docker        Where to run Python (default: local)
+#   --seed=N                      Reproducible department pick
+#   --department=Sales|Marketing|Engineering
+#                                 Override the random pick (logged loudly)
+#   --question="..."              CLI single-shot mode
+#   --autoplay=path/to/file.txt   CLI: read questions from file
+#   --help                        Show this help
+#
+# Examples:
+#   ./nl2sql ui  --openai-key=sk-...
+#   ./nl2sql cli --openai-key=sk-...
+#   ./nl2sql ui  --openai-key=sk-... --runtime=docker
+#   ./nl2sql ui  --mock
+#   ./nl2sql cli --mock --seed=42 --department=Engineering
+#   ./nl2sql cli --mock --question="average salary?"
+#   ./nl2sql test
+#   ./nl2sql eval --openai-key=sk-... --max-cost=0.50
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$REPO_ROOT"
+
+# Auto-load .env if present (gitignored). Lets the launcher / Python read
+# OPENAI_API_KEY without requiring --openai-key on every invocation.
+if [[ -f ".env" ]]; then
+    set -o allexport
+    # shellcheck disable=SC1091
+    source ".env"
+    set +o allexport
+fi
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" || $# -eq 0 ]]; then
+    sed -n '2,32p' "${BASH_SOURCE[0]}"
+    exit 0
+fi
+
+MODE="$1"; shift
+RUNTIME="local"
+OPENAI_KEY=""
+EXTRA_ARGS=()
+for arg in "$@"; do
+    case "$arg" in
+        --openai-key=*)   OPENAI_KEY="${arg#*=}" ;;
+        --mock)           export NL2SQL_LLM_PROVIDER=mock; EXTRA_ARGS+=("--mock") ;;
+        --runtime=*)      RUNTIME="${arg#*=}" ;;
+        --seed=*)         EXTRA_ARGS+=("--seed" "${arg#*=}") ;;
+        --department=*)   EXTRA_ARGS+=("--department" "${arg#*=}") ;;
+        --question=*)     EXTRA_ARGS+=("--question" "${arg#*=}") ;;
+        --autoplay=*)     EXTRA_ARGS+=("--autoplay" "${arg#*=}") ;;
+        --max-cost=*)     EXTRA_ARGS+=("--max-cost" "${arg#*=}") ;;
+        *)                EXTRA_ARGS+=("$arg") ;;
+    esac
+done
+
+case "$RUNTIME" in
+    local|docker) ;;
+    *) echo "Error: --runtime=$RUNTIME invalid. Use --runtime=local|docker." >&2; exit 2 ;;
+esac
+
+if [[ -n "$OPENAI_KEY" ]]; then
+    export OPENAI_API_KEY="$OPENAI_KEY"
+fi
+
+# Validate: must have a key OR be in mock mode (test/eval can still run without)
+if [[ "$MODE" == "ui" || "$MODE" == "cli" ]]; then
+    if [[ -z "${OPENAI_API_KEY:-}" && "${NL2SQL_LLM_PROVIDER:-}" != "mock" ]]; then
+        echo "Error: --openai-key=... is required (or pass --mock for offline)." >&2
+        echo "Run with --help for usage." >&2
+        exit 2
+    fi
+fi
+
+ensure_uv() {
+    if ! command -v uv >/dev/null 2>&1; then
+        echo "[setup] uv not found; installing via official script..."
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+    fi
+}
+
+ensure_venv() {
+    if [[ ! -d ".venv" ]]; then
+        echo "[setup] Creating venv via uv sync..."
+        if [[ "$MODE" == "ui" ]]; then
+            uv sync --extra ui
+        else
+            uv sync
+        fi
+        mkdir -p logs/ .cache/
+        echo "[setup] ✓ Ready."
+    fi
+}
+
+run_local() {
+    ensure_uv
+    ensure_venv
+    case "$MODE" in
+        ui)
+            uv sync --extra ui >/dev/null 2>&1 || true
+            uv run streamlit run streamlit_app.py \
+                --server.port 8501 --server.address localhost \
+                -- "${EXTRA_ARGS[@]}"
+            ;;
+        cli)
+            uv run python -m nl2sql "${EXTRA_ARGS[@]}"
+            ;;
+        test)
+            uv sync --extra dev >/dev/null 2>&1 || true
+            uv run pytest "${EXTRA_ARGS[@]:-}"
+            ;;
+        eval)
+            uv run python -m eval.runners.run_eval "${EXTRA_ARGS[@]:-}"
+            ;;
+        *)
+            echo "Unknown mode: $MODE" >&2; exit 2 ;;
+    esac
+}
+
+run_docker() {
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "Error: docker not found. Install Docker Desktop or drop --runtime=docker:" >&2
+        echo "  ./nl2sql $MODE --openai-key=$OPENAI_KEY   # default --runtime=local" >&2
+        exit 2
+    fi
+    # Use -it only when the parent has a real TTY (interactive REPL).
+    # Single-shot --question / piped stdin cases drop -it so docker doesn't
+    # error with "the input device is not a TTY".
+    local TTY_FLAG=""
+    if [[ -t 0 && -t 1 ]]; then
+        TTY_FLAG="-it"
+    fi
+    case "$MODE" in
+        ui)  docker compose --profile ui up --build ;;
+        cli) docker compose --profile cli run --rm $TTY_FLAG cli "${EXTRA_ARGS[@]}" ;;
+        *)   echo "Docker runtime supports modes: ui | cli (got: $MODE)" >&2; exit 2 ;;
+    esac
+}
+
+if [[ "$RUNTIME" == "docker" ]]; then run_docker; else run_local; fi

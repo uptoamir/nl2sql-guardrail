@@ -1,0 +1,161 @@
+[project]
+name = "nl2sql-data-agent"
+version = "0.3.11"
+description = "Department-scoped Natural Language to SQL agent with defense-in-depth guardrails"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Amir Khoshbin" }]
+keywords = ["nl2sql", "llm", "agent", "data", "sqlite", "guardrails"]
+
+dependencies = [
+    # Core
+    "pydantic>=2.7,<3",
+    "pydantic-settings>=2.4,<3",
+    "structlog>=24.4,<25",
+    "python-dotenv>=1.0.1,<2",
+    "tenacity>=9.0,<10",
+    "rich>=13.7,<14",
+    # SQL parsing
+    "sqlglot>=25.16,<27",
+    # LLM SDK + token accounting
+    "openai>=1.50,<2",
+    "tiktoken>=0.7,<1",
+    # Schema graph + retrieval (v0 BM25-only; embeddings deferred to v1)
+    "networkx>=3.3,<4",
+    "rank-bm25>=0.2.2,<0.3",
+    # Resilience
+    "pybreaker>=1.0,<2",
+    # Observability — minimal v0 set
+    "prometheus-client>=0.20,<1",
+    # YAML for descriptions / policies / seed examples
+    "PyYAML>=6.0,<7",
+]
+
+[project.optional-dependencies]
+ui = [
+    "streamlit>=1.40,<2",
+    "pyperclip>=1.9,<2",
+]
+anthropic = [
+    "anthropic>=0.36,<1",
+]
+obs-local = [
+    "arize-phoenix>=7.0,<8",
+    "opentelemetry-distro>=0.49b0",
+    "opentelemetry-exporter-otlp-proto-http>=1.28",
+    "opentelemetry-instrumentation-sqlite3>=0.49b0",
+    "opentelemetry-instrumentation-httpx>=0.49b0",
+]
+dev = [
+    "pytest>=8.3,<9",
+    "pytest-cov>=5,<6",
+    "pytest-mock>=3.14,<4",
+    "pytest-randomly>=3.15,<4",
+    "pytest-timeout>=2.3,<3",
+    "hypothesis>=6.112,<7",
+    "syrupy>=4.7,<5",
+    "freezegun>=1.5,<2",
+    "ruff>=0.6.9,<1",
+    "mypy>=1.11.2,<2",
+    "scipy>=1.14,<2",  # chi-square fairness test in test_department.py
+]
+
+[project.scripts]
+nl2sql = "nl2sql.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/dayforce/nl2sql"
+Issues = "https://github.com/dayforce/nl2sql/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nl2sql"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/nl2sql/schema/descriptions.yaml" = "nl2sql/schema/descriptions.yaml"
+"src/nl2sql/rag/seed_examples.yaml" = "nl2sql/rag/seed_examples.yaml"
+"src/nl2sql/governance/policies.yaml" = "nl2sql/governance/policies.yaml"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "C4", "RUF", "PL", "PTH", "ARG", "BLE"]
+ignore = [
+    "E501",     # line length handled by formatter
+    "PLR0913",  # too many args; pydantic models / dataclasses commonly hit this
+    "PLR2004",  # magic value comparison; OK in tests
+    "PLR0912",  # too many branches; CLI dispatch is naturally branchy
+    "PLR0915",  # too many statements; same reason
+    "PLR0911",  # too many return statements; validators/dispatch tables
+    "PLC0415",  # import outside top-level — intentional for optional/lazy deps
+    "RUF001",   # ambiguous unicode in strings — em-dashes used in docstrings/prose intentionally
+    "RUF002",   # same, in docstrings
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ARG", "PLR2004", "BLE"]
+"src/nl2sql/cli/**/*.py" = ["PLR0912", "PLR0915"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+no_implicit_optional = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "sqlglot.*",
+    "networkx.*",
+    "rank_bm25.*",
+    "pybreaker.*",
+    "tiktoken.*",
+    "yaml",
+    "yaml.*",
+    "opentelemetry",
+    "opentelemetry.*",
+    "prometheus_client",
+    "prometheus_client.*",
+    "diskcache",
+    "structlog",
+    "structlog.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+markers = [
+    "integration: integration tests (use real SQLite DB, no network)",
+    "property: hypothesis property-based tests",
+    "redteam: adversarial red-team tests — must never leak",
+    "e2e: end-to-end CLI tests (subprocess)",
+    "live_llm: requires a real LLM API key — skipped in CI by default",
+    "slow: long-running tests — opt-in",
+]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+source = ["src/nl2sql"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]

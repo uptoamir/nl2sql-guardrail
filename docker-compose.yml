@@ -1,0 +1,76 @@
+# docker-compose for the Dayforce NL2SQL Data Agent.
+#
+# Two profiles share the same image:
+#   ui   — Streamlit web UI on http://localhost:8501
+#   cli  — interactive REPL (allocates a TTY)
+#
+# Launch via `./nl2sql ui --runtime=docker` / `./nl2sql cli --runtime=docker`.
+
+services:
+  ui:
+    profiles: ["ui"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nl2sql:dev
+    ports:
+      - "8501:8501"
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      NL2SQL_LLM_PROVIDER: "${NL2SQL_LLM_PROVIDER:-openai}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      NL2SQL_DB_PATH: /app/employees.db
+      NL2SQL_BOOKMARKS_DIR: /app/.cache/nl2sql
+    entrypoint: ["streamlit", "run", "streamlit_app.py",
+                 "--server.port", "8501",
+                 "--server.address", "0.0.0.0",
+                 "--server.headless", "true",
+                 "--browser.gatherUsageStats", "false"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M,mode=1777
+    volumes:
+      - nl2sql-logs:/app/logs
+      - nl2sql-cache:/app/.cache
+    cap_drop: ["ALL"]
+    security_opt:
+      - "no-new-privileges:true"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health').read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  cli:
+    profiles: ["cli"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nl2sql:dev
+    env_file:
+      - path: ./.env
+        required: false
+    environment:
+      NL2SQL_LLM_PROVIDER: "${NL2SQL_LLM_PROVIDER:-openai}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      NL2SQL_DB_PATH: /app/employees.db
+      NL2SQL_BOOKMARKS_DIR: /app/.cache/nl2sql
+    stdin_open: true
+    tty: true
+    entrypoint: ["python", "-m", "nl2sql"]
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M,mode=1777
+    volumes:
+      - nl2sql-logs:/app/logs
+      - nl2sql-cache:/app/.cache
+    cap_drop: ["ALL"]
+    security_opt:
+      - "no-new-privileges:true"
+
+volumes:
+  nl2sql-logs:
+  nl2sql-cache:
