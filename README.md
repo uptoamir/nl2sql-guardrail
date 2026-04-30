@@ -1,5 +1,9 @@
 # Dayforce NL2SQL Data Agent
 
+[**▶ Live demo →**](https://nl2sql-guardrail-production.up.railway.app/)
+&nbsp;·&nbsp;
+[GitHub](https://github.com/uptoamir/nl2sql-guardrail)
+
 Natural-language → SQL agent over `employees.db` with an **8-layer guardrail**
 that makes cross-department data leakage **structurally impossible**. Two
 launch modes (CLI + browser UI), full feature parity, real defense-in-depth.
