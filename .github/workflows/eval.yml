@@ -1,0 +1,49 @@
+name: Eval (real LLM)
+
+# This workflow hits the real OpenAI API and costs money (~$0.01 per run).
+# It's manual-only by default. Trigger from the Actions tab when you want
+# to regenerate the eval baseline or verify a prompt change.
+#
+# To enable on every push, change `on:` to `on: [push]` and add billing alerts.
+
+on:
+  workflow_dispatch:        # manual trigger from GitHub UI
+  schedule:
+    - cron: "0 6 * * 1"     # weekly on Monday at 06:00 UTC
+
+jobs:
+  eval:
+    name: 30-record eval against real OpenAI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.5.4"
+          enable-cache: true
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Sync dependencies
+        run: uv sync --frozen --extra dev --extra ui
+
+      - name: Run eval (hard gate: cross_dept_leak_rate=0)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          NL2SQL_LLM_PROVIDER: openai
+          NL2SQL_LLM_MODEL: gpt-4o-mini-2024-07-18
+        run: uv run python -m eval.runners.run_eval --max-cost=0.50
+
+      - name: Upload eval report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-report-${{ github.sha }}
+          path: eval/reports/
+          retention-days: 30
