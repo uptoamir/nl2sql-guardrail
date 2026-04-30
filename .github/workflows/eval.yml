@@ -33,7 +33,7 @@ jobs:
       - name: Sync dependencies
         run: uv sync --frozen --extra dev --extra ui
 
-      - name: Run eval (hard gate: cross_dept_leak_rate=0)
+      - name: "Run eval (hard gate: cross_dept_leak_rate=0)"
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           NL2SQL_LLM_PROVIDER: openai
