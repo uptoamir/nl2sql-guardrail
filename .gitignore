@@ -49,7 +49,10 @@ audit.jsonl
 .uv/
 pip-wheel-metadata/
 
-# Markdown — only README.md ships; all other .md files are local drafts /
-# implementation notes / audit logs / plans / spec docs and stay un-tracked.
+# Markdown — only README.md ships at the repo root; all other root-level
+# .md files are local drafts / implementation notes / audit logs / plans /
+# spec docs and stay un-tracked. The negation rule (!src/**/*.md) preserves
+# the prompt templates inside the package, which ARE part of the build.
 *.md
 !README.md
+!src/**/*.md
