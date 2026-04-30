@@ -7,7 +7,7 @@ launch modes (CLI + browser UI), full feature parity, real defense-in-depth.
 ## 30 seconds — single command
 
 ```bash
-git clone <this-repo> && cd nl2sql
+git clone https://github.com/uptoamir/nl2sql-guardrail.git && cd nl2sql-guardrail
 
 # Browser UI (offline, no API key)
 ./nl2sql ui --mock
@@ -22,6 +22,94 @@ git clone <this-repo> && cd nl2sql
 
 The launcher auto-bootstraps `uv` + the venv on first run (~30s cold,
 ~5s subsequent).
+
+### Per-OS setup
+
+The launcher is a Bash script and runs natively on macOS and Linux.
+On Windows, use **WSL2** (recommended) or **Git Bash**.
+
+<details>
+<summary><strong>macOS</strong></summary>
+
+```bash
+# 1. Install uv (Python package manager) — auto-installs Python 3.12 if needed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. (Optional) Install Docker Desktop if you want --runtime=docker
+#    https://www.docker.com/products/docker-desktop/
+
+# 3. Clone + run
+git clone https://github.com/uptoamir/nl2sql-guardrail.git
+cd nl2sql-guardrail
+./nl2sql ui --mock
+```
+</details>
+
+<details>
+<summary><strong>Linux (Ubuntu/Debian/Fedora/Arch)</strong></summary>
+
+```bash
+# 1. Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. (Optional) Docker Engine + Compose plugin
+#    Ubuntu/Debian: https://docs.docker.com/engine/install/ubuntu/
+#    Fedora:        https://docs.docker.com/engine/install/fedora/
+
+# 3. Clone + run
+git clone https://github.com/uptoamir/nl2sql-guardrail.git
+cd nl2sql-guardrail
+chmod +x nl2sql
+./nl2sql ui --mock
+```
+</details>
+
+<details>
+<summary><strong>Windows — WSL2 (recommended)</strong></summary>
+
+```powershell
+# 1. Install WSL2 with Ubuntu (one-time, in PowerShell as admin)
+wsl --install -d Ubuntu
+
+# 2. Restart, open the Ubuntu shell. From here, everything is Linux:
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 3. (Optional) Docker Desktop with WSL2 backend:
+#    https://docs.docker.com/desktop/setup/install/windows-install/
+
+# 4. Clone + run (inside Ubuntu shell)
+git clone https://github.com/uptoamir/nl2sql-guardrail.git
+cd nl2sql-guardrail
+./nl2sql ui --mock
+```
+
+> **Note**: open the UI in your Windows browser at `http://localhost:8501` —
+> WSL2 forwards the port automatically.
+
+</details>
+
+<details>
+<summary><strong>Windows — Git Bash (no WSL)</strong></summary>
+
+```bash
+# 1. Install Git for Windows (includes Git Bash)
+#    https://git-scm.com/download/win
+
+# 2. Install uv via PowerShell (one-time)
+#    Run in PowerShell:
+#    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# 3. Open Git Bash, then:
+git clone https://github.com/uptoamir/nl2sql-guardrail.git
+cd nl2sql-guardrail
+./nl2sql ui --mock
+```
+
+> **Caveat**: some Bash features in the launcher (e.g., `[[ -t 0 && -t 1 ]]`)
+> behave slightly differently in Git Bash than in real Bash. WSL2 is more
+> reliable.
+
+</details>
 
 ## What you'll see
 
