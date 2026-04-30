@@ -1,0 +1,27 @@
+# Railway deployment config.
+#
+# Railway builds from the existing Dockerfile (multi-stage uv → python:3.12-slim,
+# non-root, read-only-aware). The default Dockerfile ENTRYPOINT is the CLI; we
+# override it here so Railway runs the Streamlit UI on the dynamically-assigned
+# $PORT.
+#
+# Required env vars (set in the Railway service dashboard):
+#   OPENAI_API_KEY         — your OpenAI key (or omit + set NL2SQL_LLM_PROVIDER=mock)
+#   NL2SQL_LLM_MODEL       — gpt-4o-mini-2024-07-18 (default)
+#   NL2SQL_BOOKMARKS_DIR   — /app/.cache/nl2sql (override since $HOME may be read-only)
+#
+# Optional:
+#   NL2SQL_LLM_PROVIDER    — openai | mock (default: openai)
+#   NL2SQL_DEPARTMENT_OVERRIDE — Sales | Marketing | Engineering (force a dept)
+#   NL2SQL_RANDOM_SEED     — int for reproducible department picks
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --browser.gatherUsageStats false"
+healthcheckPath = "/_stcore/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
