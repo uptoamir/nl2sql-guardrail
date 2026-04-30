@@ -43,41 +43,7 @@ jobs:
       - name: Verify launcher script is executable
         run: test -x ./nl2sql || (echo "nl2sql launcher not executable" && exit 1)
 
-  deploy:
-    name: Deploy to Railway
-    needs: lint-typecheck-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    concurrency:
-      group: railway-deploy
-      cancel-in-progress: false
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: |
-          curl -fsSL https://railway.com/install.sh | sh
-          echo "$HOME/.railway/bin" >> $GITHUB_PATH
-
-      - name: Trigger Railway redeploy
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: railway redeploy --service nl2sql-guardrail --yes
-
-      - name: Wait for deploy to be healthy
-        run: |
-          set -e
-          URL="https://nl2sql-guardrail-production.up.railway.app/_stcore/health"
-          for i in {1..60}; do
-            if curl -sf -o /dev/null "$URL"; then
-              echo "Deploy is healthy after $i checks"
-              exit 0
-            fi
-            echo "Attempt $i: not healthy yet, waiting 10s..."
-            sleep 10
-          done
-          echo "Deploy did not become healthy within 10 minutes"
-          exit 1
+# NOTE: Deploy is handled by Railway's "Wait for CI" feature (Settings →
+# Source → Wait for CI). Railway watches this CI workflow's status and only
+# deploys when it succeeds. No GitHub Actions deploy step needed — Railway
+# is the deployer, gated on CI green.
