@@ -251,7 +251,9 @@ with st.sidebar:
     st.divider()
 
     cost = session.session_cost
-    st.caption(f"**{cost['turns']}** turns · **{cost['tokens']:,}** tokens · **${cost['usd']:.4f}**")
+    st.caption(
+        f"**{cost['turns']}** turns · **{cost['tokens']:,}** tokens · **${cost['usd']:.4f}**"
+    )
 
     st.divider()
 
@@ -398,3 +400,8 @@ if question:
                     "content": narrative_text or "(no answer)",
                 }
             )
+
+    # Force a rerun so the sidebar's turns/tokens/cost meter reflects this
+    # turn immediately. Without this, the sidebar shows the count from BEFORE
+    # this turn until the user's next interaction triggers a natural rerun.
+    st.rerun()
