@@ -102,7 +102,13 @@ def render_critic_prompt(sql: str, explain_plan: str) -> str:
 
 
 def render_interpreter_prompt(
-    *, question: str, sql: str, columns: list[str], rows_preview: str
+    *,
+    question: str,
+    sql: str,
+    columns: list[str],
+    rows_preview: str,
+    row_count: int,
+    preview_size: int,
 ) -> str:
     template = _load_template("interpreter")
     return template.format(
@@ -110,4 +116,6 @@ def render_interpreter_prompt(
         sql=sql,
         columns=", ".join(columns),
         rows_preview=rows_preview,
+        row_count=row_count,
+        preview_size=preview_size,
     )

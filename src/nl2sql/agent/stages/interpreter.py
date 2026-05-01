@@ -27,11 +27,14 @@ def interpret_streaming(
 
     Row content is sanitized first (indirect-injection defense per §16.1).
     """
-    rows_preview = render_rows_preview(exec_result.rows, exec_result.columns, max_rows=10)
+    preview_size = 10
+    rows_preview = render_rows_preview(exec_result.rows, exec_result.columns, max_rows=preview_size)
     prompt = render_interpreter_prompt(
         question=question,
         sql=sql,
         columns=exec_result.columns,
         rows_preview=rows_preview,
+        row_count=len(exec_result.rows),
+        preview_size=preview_size,
     )
     yield from shared.llm_client.complete_streaming(prompt, stage="interpreter")
