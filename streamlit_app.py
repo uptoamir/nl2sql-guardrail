@@ -209,8 +209,18 @@ st.markdown(
           padding: 0.6rem 0;
       }
       [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p {
-          margin: 0.3rem 0;
+          margin: 0;
           line-height: 1.55;
+      }
+      /* User messages are typically one short line — center the avatar
+         vertically against the text so it doesn't appear to float. */
+      [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+          align-items: center !important;
+      }
+      /* Assistant messages have a meta strip + trace + table + expanders
+         below the narrative, so keep the avatar top-aligned (default). */
+      [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
+          align-items: flex-start !important;
       }
 
       /* ── Meta chip strip (confidence / rows / ms / tokens) ─────────── */
