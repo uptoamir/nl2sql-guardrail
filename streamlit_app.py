@@ -30,7 +30,7 @@ from nl2sql.guardrails.department import pick_department
 from nl2sql.session import Session, SharedResources, bootstrap_shared
 
 st.set_page_config(
-    page_title="Dayforce NL2SQL",
+    page_title="NL2SQL Guardrail",
     page_icon="📊",
     layout="centered",
     initial_sidebar_state="collapsed",
@@ -240,7 +240,7 @@ if "pending_question" not in st.session_state:
 
 # ─── Sidebar: scope, cost, history, controls ────────────────────────────────
 with st.sidebar:
-    st.markdown("### 📊 Dayforce NL2SQL")
+    st.markdown("### 📊 NL2SQL Guardrail")
     mode = "mock" if os.environ.get("NL2SQL_LLM_PROVIDER") == "mock" else "real-LLM"
     st.markdown(
         f'<span class="nl2sql-scope-pill">scope · {session.dept}</span> '
@@ -313,7 +313,7 @@ if not st.session_state["messages"] and not st.session_state["pending_question"]
     st.markdown(
         f"""
         <div class="nl2sql-hero">
-          <h1>Dayforce NL2SQL</h1>
+          <h1>NL2SQL Guardrail</h1>
           <p>Ask about the <strong>{session.dept}</strong> department.
           Cross-department rows are guarded at 8 layers.</p>
         </div>
@@ -337,7 +337,7 @@ for msg in st.session_state["messages"]:
 
 
 # ─── Input ──────────────────────────────────────────────────────────────────
-question = st.chat_input(f"Message Dayforce NL2SQL · {session.dept}")
+question = st.chat_input(f"Message NL2SQL Guardrail · {session.dept}")
 if st.session_state["pending_question"]:
     question = st.session_state["pending_question"]
     st.session_state["pending_question"] = None

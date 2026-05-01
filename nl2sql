@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ./nl2sql — single-command launcher for the Dayforce NL2SQL Data Agent.
+# ./nl2sql — single-command launcher for the NL2SQL Guardrail Data Agent.
 #
 # Usage: ./nl2sql <mode> [flags]
 #

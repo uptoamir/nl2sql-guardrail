@@ -1,4 +1,4 @@
-# Dayforce NL2SQL Data Agent
+# NL2SQL Guardrail Data Agent
 
 [**▶ Live demo →**](https://nl2sql-guardrail-production.up.railway.app/)
 &nbsp;·&nbsp;
@@ -221,7 +221,7 @@ SECURITY.md                   Vulnerability disclosure process
 
 ## What's deferred to v1 (honest)
 
-`final_1.md` describes a full Dayforce production service with
+`final_1.md` describes a full enterprise production service with
 multi-tenant scope, multi-region (PIPEDA / GDPR data residency), SLSA
 L3 supply chain, OTel observability, eval-driven CI gating, runbooks,
 SOC 2 evidence collection. **The take-home submission is a focused

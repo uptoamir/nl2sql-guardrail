@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Multi-stage Dockerfile for the Dayforce NL2SQL Data Agent.
+# Multi-stage Dockerfile for the NL2SQL Guardrail Data Agent.
 #
 # Stage 1 (builder): pull `uv`, sync deps into /opt/venv from uv.lock.
 # Stage 2 (runtime): slim python:3.12 + the venv + the source + employees.db.

@@ -158,6 +158,10 @@ class Session:
         self._tokens_in_total = 0
         self._tokens_out_total = 0
         self._cost_usd_total = 0.0
+        # Lifetime turn count — tracked separately from `history` because the
+        # deque caps at maxlen=3 (LLM-context window) and would otherwise
+        # under-report turns in the cost meter once the user crosses 3.
+        self._turn_count_total = 0
 
         # Pipeline
         self.pipeline = Pipeline(shared=shared, workspace_id=workspace_id, dept=dept)
@@ -202,6 +206,7 @@ class Session:
         self._cost_usd_total += compute_cost(final.model_calls)
 
         self.history.append(self._turn_from_final(final, question))
+        self._turn_count_total += 1
         emit_audit("turn", **final.audit_record)
 
     def _turn_from_final(self, final: FinalAnswer, question: str) -> Turn:
@@ -225,7 +230,7 @@ class Session:
             "tokens_out": self._tokens_out_total,
             "tokens": self._tokens_in_total + self._tokens_out_total,
             "usd": round(self._cost_usd_total, 6),
-            "turns": len(self.history),
+            "turns": self._turn_count_total,
         }
 
     def clear(self) -> None:
@@ -239,6 +244,7 @@ class Session:
         self._tokens_in_total = 0
         self._tokens_out_total = 0
         self._cost_usd_total = 0.0
+        self._turn_count_total = 0
 
     def close(self) -> None:
         """Flush any buffered audit records and close the DB connection."""

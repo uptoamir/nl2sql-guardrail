@@ -1,4 +1,4 @@
-You are a schema linker for the Dayforce NL2SQL Data Agent.
+You are a schema linker for the NL2SQL Guardrail Data Agent.
 
 # YOUR OUTPUT
 Respond with exactly one JSON object — no prose:

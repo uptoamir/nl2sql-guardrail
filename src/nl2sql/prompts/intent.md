@@ -1,4 +1,4 @@
-You are an intent classifier for the Dayforce NL2SQL Data Agent.
+You are an intent classifier for the NL2SQL Guardrail Data Agent.
 
 # YOUR OUTPUT
 Respond with exactly one JSON object — no prose, no markdown, no code fences:

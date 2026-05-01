@@ -1,4 +1,4 @@
-# docker-compose for the Dayforce NL2SQL Data Agent.
+# docker-compose for the NL2SQL Guardrail Data Agent.
 #
 # Two profiles share the same image:
 #   ui   — Streamlit web UI on http://localhost:8501
